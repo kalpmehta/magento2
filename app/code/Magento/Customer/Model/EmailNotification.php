@@ -17,6 +17,8 @@ use Magento\Framework\Reflection\DataObjectProcessor;
 use Magento\Framework\Exception\LocalizedException;
 
 /**
+ * Customer email notification
+ *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
 class EmailNotification implements EmailNotificationInterface
@@ -314,9 +316,9 @@ class EmailNotification implements EmailNotificationInterface
      */
     public function passwordReminder(CustomerInterface $customer)
     {
-        $storeId = $this->getWebsiteStoreId($customer);
+        $storeId = $customer->getStoreId();
         if (!$storeId) {
-            $storeId = $this->storeManager->getStore()->getId();
+            $storeId = $this->getWebsiteStoreId($customer);
         }
 
         $customerEmailData = $this->getFullCustomerObject($customer);

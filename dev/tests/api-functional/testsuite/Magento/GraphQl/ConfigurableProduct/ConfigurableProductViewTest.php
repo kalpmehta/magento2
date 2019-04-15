@@ -89,7 +89,6 @@ class ConfigurableProductViewTest extends GraphQlAbstract
           }
         }
       }
-      category_ids
       ... on ConfigurableProduct {
         configurable_options {
           id
@@ -110,7 +109,6 @@ class ConfigurableProductViewTest extends GraphQlAbstract
         variants {
           product {
             id
-            category_ids
             name
             sku
             attribute_set_id
@@ -206,7 +204,6 @@ QUERY;
         /**
          * @var ProductRepositoryInterface $productRepository
          */
-
         $productRepository = ObjectManager::getInstance()->get(ProductRepositoryInterface::class);
         $product = $productRepository->get($productSku, false, null, true);
 
@@ -306,10 +303,6 @@ QUERY;
             $indexValue = $variantArray['product']['sku'];
             unset($variantArray['product']['id']);
             $this->assertTrue(
-                isset($variantArray['product']['category_ids']),
-                'variant product doesn\'t contain category_ids key'
-            );
-            $this->assertTrue(
                 isset($variantArray['product']['categories']),
                 'variant product doesn\'t contain categories key'
             );
@@ -326,12 +319,6 @@ QUERY;
                 = $actualResponse['variants'][$variantKey]['product']['categories'][0];
             $this->assertEquals($actualValue, ['id' => $id]);
             unset($variantArray['product']['categories']);
-
-            $categoryIdsAttribute = $childProduct->getCustomAttribute('category_ids');
-            $this->assertNotEmpty($categoryIdsAttribute, "Precondition failed: 'category_ids' must not be empty");
-            $categoryIdsAttributeValue = $categoryIdsAttribute ? $categoryIdsAttribute->getValue() : [];
-            $this->assertEquals($categoryIdsAttributeValue, $variantArray['product']['category_ids']);
-            unset($variantArray['product']['category_ids']);
 
             $mediaGalleryEntries = $childProduct->getMediaGalleryEntries();
             $this->assertCount(
@@ -419,6 +406,7 @@ QUERY;
                 $variantArray['product']['price']
             );
             $configurableOptions = $this->getConfigurableOptions();
+            $this->assertEquals(1, count($variantArray['attributes']));
             foreach ($variantArray['attributes'] as $attribute) {
                 $hasAssertion = false;
                 foreach ($configurableOptions as $option) {
@@ -495,31 +483,6 @@ QUERY;
             $this->assertEquals(
                 (int)$value['value_index'],
                 (int)$configurableAttributeOption['options'][$key]['value_index']
-            );
-        }
-    }
-
-    /**
-     * @param array $actualResponse
-     * @param array $assertionMap ['response_field_name' => 'response_field_value', ...]
-     *                         OR [['response_field' => $field, 'expected_value' => $value], ...]
-     */
-    private function assertResponseFields(array $actualResponse, array $assertionMap)
-    {
-        foreach ($assertionMap as $key => $assertionData) {
-            $expectedValue = isset($assertionData['expected_value'])
-                ? $assertionData['expected_value']
-                : $assertionData;
-            $responseField = isset($assertionData['response_field']) ? $assertionData['response_field'] : $key;
-            $this->assertNotNull(
-                $expectedValue,
-                "Value of '{$responseField}' field must not be NULL"
-            );
-            $this->assertEquals(
-                $expectedValue,
-                $actualResponse[$responseField],
-                "Value of '{$responseField}' field in response does not match expected value: "
-                . var_export($expectedValue, true)
             );
         }
     }
